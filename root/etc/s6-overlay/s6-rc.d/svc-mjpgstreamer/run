@@ -1,0 +1,44 @@
+#!/usr/bin/with-contenv bash
+set -e
+
+MJPGST_INPUT_MODULE="${MJPGST_INPUT_MODULE:-input_uvc.so}";
+MJPGST_INPUT_OPTS="${MJPGST_INPUT_OPTS:- -n -r 640x480}";
+
+MJPGST_HOST="${MJPGST_HOST:-0.0.0.0}";
+MJPGST_PORT="${MJPGST_PORT:-8080}";
+
+MJPGST_OUTPUT_MODULE="${MJPGST_OUTPUT_MODULE:-output_http.so}";
+MJPGST_OUTPUT_OPTS="${MJPGST_OUTPUT_OPTS:- -l $MJPGST_HOST -p $MJPGST_PORT}";
+
+# MJPGST_VIDEO_DEV="${MJPGST_VIDEO_DEV:-/dev/video0}";
+if [ -n "${MJPGST_VIDEO_DEV}" ];
+then
+    if [ ! -e "${MJPGST_VIDEO_DEV}"  ]; # camera dev must exist if specified
+    then
+        echo "device ${MJPGST_VIDEO_DEV} not found";
+        sleep 5;
+        exit 1;
+    fi;
+    MJPGST_INPUT_OPTS="-d ${MJPGST_VIDEO_DEV} ${MJPGST_INPUT_OPTS}";
+fi;
+
+if [ -n "${MJPGST_CREDENTIALS}" ]; # if non-empty, append user:pass credentials as specified
+then
+    MJPGST_OUTPUT_OPTS+=" -c ${MJPGST_CREDENTIALS}";
+fi;
+
+MJPGST_WWW_ROOT="${MJPGST_WWW_ROOT:-/usr/local/share/mjpg-streamer/www}";
+if [ -n "${MJPGST_WWW_ROOT}" ]; # if empty, don't serve webui, only snapshot/stream
+then
+    MJPGST_OUTPUT_OPTS+=" -w ${MJPGST_WWW_ROOT}";
+fi;
+
+# MJPGST_ARGS="${MJPGST_ARGS:- }";
+
+s6-setuidgid ${S6_USER:-alpine} \
+exec \
+    mjpg_streamer \
+        -i "${MJPGST_INPUT_MODULE} ${MJPGST_INPUT_OPTS}" \
+        -o "${MJPGST_OUTPUT_MODULE} ${MJPGST_OUTPUT_OPTS}" \
+        ${MJPGST_ARGS} \
+    ;

@@ -1,0 +1,37 @@
+diff --git a/mjpg-streamer-experimental/plugins/output_http/httpd.c b/mjpg-streamer-experimental/plugins/output_http/httpd.c
+index 1fe9115..4804acf 100644
+--- a/mjpg-streamer-experimental/plugins/output_http/httpd.c
++++ b/mjpg-streamer-experimental/plugins/output_http/httpd.c
+@@ -52,6 +52,15 @@
+
+ #include "../output_file/output_file.h"
+
++#if defined(MANAGMENT)
++
++struct {
++    client_info **infos;
++    unsigned int client_count;
++    pthread_mutex_t mutex;
++} client_infos;
++
++#endif
+
+ static globals *pglobal;
+ extern context servers[MAX_OUTPUT_PLUGINS];
+diff --git a/mjpg-streamer-experimental/plugins/output_http/httpd.h b/mjpg-streamer-experimental/plugins/output_http/httpd.h
+index 4c2b1bc..651c484 100644
+--- a/mjpg-streamer-experimental/plugins/output_http/httpd.h
++++ b/mjpg-streamer-experimental/plugins/output_http/httpd.h
+@@ -148,12 +148,6 @@ typedef struct _client_info {
+     struct timeval last_take_time;
+ } client_info;
+
+-struct {
+-    client_info **infos;
+-    unsigned int client_count;
+-    pthread_mutex_t mutex;
+-} client_infos;
+-
+ #endif
+
+ /*
