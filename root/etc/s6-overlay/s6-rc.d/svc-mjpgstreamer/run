@@ -1,6 +1,8 @@
 #!/usr/bin/with-contenv bash
 set -e
 
+usercmd () { if [ "X${EUID}" != "X0" ]; then ${1} "${@:2}"; else s6-setuidgid ${PUID:-1000}:${PGID:-1000} ${1} "${@:2}"; fi; }
+
 MJPGST_INPUT_MODULE="${MJPGST_INPUT_MODULE:-input_uvc.so}";
 MJPGST_INPUT_OPTS="${MJPGST_INPUT_OPTS:- -n -r 640x480}";
 
@@ -35,7 +37,7 @@ fi;
 
 # MJPGST_ARGS="${MJPGST_ARGS:- }";
 
-s6-setuidgid ${S6_USER:-alpine} \
+usercmd \
 exec \
     mjpg_streamer \
         -i "${MJPGST_INPUT_MODULE} ${MJPGST_INPUT_OPTS}" \

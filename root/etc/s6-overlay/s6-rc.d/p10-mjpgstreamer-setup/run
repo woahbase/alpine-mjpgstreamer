@@ -4,13 +4,14 @@ set -e
 vecho () { if [ "${S6_VERBOSITY:-1}" -gt 0 ]; then echo "[$0] $@"; fi; }
 
 MJPGST_VIDEO_DEV="${MJPGST_VIDEO_DEV:-/dev/video0}";
-GID_VIDEO="${GID_VIDEO:-$(ls -ldn $MJPGST_VIDEO_DEV 2>/dev/null | awk 'NR==1 {print $4}')}";
 
-vecho "Add ${S6_USER:-alpine} to group: video";
-
-if [ -n "${GID_VIDEO}" ]; # update gid of 'video' if defined
+if [ "X${EUID}" == "X0" ]; # requires root
 then
-    groupmod -o -g "${GID_VIDEO}" video;
-fi
+    GID_VIDEO="${GID_VIDEO:-$(ls -ldn $MJPGST_VIDEO_DEV 2>/dev/null | awk 'NR==1 {print $4}')}";
 
-adduser ${S6_USER:-alpine} video;
+    if [ -n "${GID_VIDEO}" ]; # update gid of 'video' if defined
+    then groupmod -o -g "${GID_VIDEO}" video;
+    fi;
+    vecho "Add ${S6_USER:-alpine} to group: video (${GID_VIDEO})";
+    adduser ${S6_USER:-alpine} video;
+fi;
